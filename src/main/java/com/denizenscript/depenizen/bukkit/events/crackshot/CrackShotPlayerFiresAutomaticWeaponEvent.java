@@ -21,14 +21,12 @@ public class CrackShotPlayerFiresAutomaticWeaponEvent extends BukkitScriptEvent 
     //
     // @Triggers while a player is firing a fully automatic CrackShot weapon.
     //
-    // @Cancellable false
-    //
     // @Context
     // <context.weapon> returns the name of the weapon.
     // <context.fire_rate> returns the weapon fire rate.
     //
     // @Determine
-    // "FIRE_RATE:" + ElementTag(Number) to set the fire rate.
+    // "FIRE_RATE:<ElementTag(Number)>" to set the fire rate.
     //
     // @Plugin Depenizen, CrackShot
     //

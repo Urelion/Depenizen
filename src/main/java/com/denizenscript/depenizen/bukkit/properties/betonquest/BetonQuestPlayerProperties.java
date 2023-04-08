@@ -27,13 +27,13 @@ public class BetonQuestPlayerProperties implements Property {
     public static final String[] handledMechs = new String[] {
     }; // None
 
-    private BetonQuestPlayerProperties(PlayerTag player) {
+    public BetonQuestPlayerProperties(PlayerTag player) {
         this.player = player;
     }
 
     PlayerTag player;
 
-    public static void registerTags() {
+    public static void register() {
 
         // <--[tag]
         // @attribute <PlayerTag.beton_quest[<package>].variable[<variable>]>

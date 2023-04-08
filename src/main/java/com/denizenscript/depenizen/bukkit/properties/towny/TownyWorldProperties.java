@@ -40,13 +40,13 @@ public class TownyWorldProperties implements Property {
     public static final String[] handledMechs = new String[] {
     }; // None
 
-    private TownyWorldProperties(WorldTag world) {
+    public TownyWorldProperties(WorldTag world) {
         this.world = world;
     }
 
     public WorldTag world;
 
-    public static void registerTags() {
+    public static void register() {
 
         // <--[tag]
         // @attribute <WorldTag.towny_enabled>

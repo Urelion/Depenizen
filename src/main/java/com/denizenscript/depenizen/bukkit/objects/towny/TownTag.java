@@ -7,6 +7,7 @@ import com.denizenscript.denizencore.flags.FlaggableObject;
 import com.denizenscript.denizencore.flags.RedirectionFlagTracker;
 import com.denizenscript.denizencore.objects.*;
 import com.denizenscript.denizencore.tags.ObjectTagProcessor;
+import com.denizenscript.denizencore.utilities.CoreUtilities;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
 import com.palmergames.bukkit.towny.exceptions.TownyException;
 import com.palmergames.bukkit.towny.object.*;
@@ -20,6 +21,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
@@ -46,16 +48,11 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
     //   OBJECT FETCHER
     /////////////////
 
-    public static TownTag valueOf(String string) {
-        return valueOf(string, null);
-    }
-
     @Fetchable("town")
     public static TownTag valueOf(String string, TagContext context) {
-        if (string == null) {
-            return null;
+        if (string.startsWith("town@")) {
+            string = string.substring("town@".length());
         }
-        string = string.replace("town@", "");
         if (string.length() == 36 && string.indexOf('-') >= 0) {
             try {
                 UUID uuid = UUID.fromString(string);
@@ -81,7 +78,7 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
         if (arg.startsWith("town@")) {
             return true;
         }
-        return valueOf(arg) != null;
+        return valueOf(arg, CoreUtilities.noDebugContext) != null;
     }
 
     /////////////////////
@@ -104,6 +101,21 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
         catch (NotRegisteredException e) {
             return null;
         }
+    }
+
+    public static ListTag getPlayersFromResidents(Collection<Resident> residentCollection) {
+        ListTag list = new ListTag();
+        for (Resident resident : residentCollection) {
+            if (resident.getUUID() != null) {
+                OfflinePlayer pl = Bukkit.getOfflinePlayer(resident.getUUID());
+                if (pl.hasPlayedBefore()) {
+                    list.addObject(new PlayerTag(pl));
+                    continue;
+                }
+            }
+            list.add(resident.getName());
+        }
+        return list;
     }
 
     public static CuboidTag getCuboid(World world, int townCoordX, int townCoordZ) {
@@ -175,7 +187,7 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
         // Nothing to do.
     }
 
-    public static void registerTags() {
+    public static void register() {
 
         AbstractFlagTracker.registerFlagHandlers(tagProcessor);
 
@@ -183,22 +195,13 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
         // @attribute <TownTag.assistants>
         // @returns ListTag
         // @plugin Depenizen, Towny
+        // @deprecated use 'members_by_rank'
         // @description
         // Returns a list of the town's assistants. Players will be valid PlayerTag instances, non-players will be plaintext of the name.
+        // Deprecated in favor of <@link tag TownTag.members_by_rank[<rank>]>.
         // -->
         tagProcessor.registerTag(ListTag.class, "assistants", (attribute, object) -> {
-            ListTag list = new ListTag();
-            for (Resident resident : object.town.getRank("assistant")) {
-                if (resident.getUUID() != null) {
-                    OfflinePlayer pl = Bukkit.getOfflinePlayer(resident.getUUID());
-                    if (pl.hasPlayedBefore()) {
-                        list.addObject(new PlayerTag(pl));
-                        continue;
-                    }
-                }
-                list.add(resident.getName());
-            }
-            return list;
+            return getPlayersFromResidents(object.town.getRank("assistant"));
         });
 
         // <--[tag]
@@ -225,6 +228,17 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
         });
 
         // <--[tag]
+        // @attribute <TownTag.members_by_rank[<rank>]>
+        // @returns ListTag
+        // @plugin Depenizen, Towny
+        // @description
+        // Returns a list of the town's members with a given rank. Players will be valid PlayerTag instances, non-players will be plaintext of the name.
+        // -->
+        tagProcessor.registerTag(ListTag.class, ElementTag.class, "members_by_rank", (attribute, object, rankObj) -> {
+            return getPlayersFromResidents(object.town.getRank(rankObj.asString()));
+        });
+
+        // <--[tag]
         // @attribute <TownTag.is_open>
         // @returns ElementTag(Boolean)
         // @plugin Depenizen, Towny
@@ -243,8 +257,7 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
         // Returns true if the town is currently public.
         // -->
         tagProcessor.registerTag(ElementTag.class, "is_public", (attribute, object) -> {
-            return new ElementTag(object.town.isPublic())
-                    ;
+            return new ElementTag(object.town.isPublic());
         });
 
         // <--[tag]
@@ -290,6 +303,17 @@ public class TownTag implements ObjectTag, Adjustable, FlaggableObject {
             catch (NotRegisteredException e) {
             }
             return null;
+        });
+
+        // <--[tag]
+        // @attribute <TownTag.outlaws>
+        // @returns ListTag
+        // @plugin Depenizen, Towny
+        // @description
+        // Returns a list of the town's outlaws. Players will be valid PlayerTag instances, non-players will be plaintext of the name.
+        // -->
+        tagProcessor.registerTag(ListTag.class, "outlaws", (attribute, object) -> {
+            return getPlayersFromResidents(object.town.getOutlaws());
         });
 
         // <--[tag]

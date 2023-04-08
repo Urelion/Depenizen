@@ -63,7 +63,7 @@ public class WorldEditPlayerProperties implements Property {
             "we_selection"
     };
 
-    private WorldEditPlayerProperties(PlayerTag player) {
+    public WorldEditPlayerProperties(PlayerTag player) {
         this.player = player.getPlayerEntity();
     }
 
@@ -76,7 +76,7 @@ public class WorldEditPlayerProperties implements Property {
         return mat;
     }
 
-    public static void registerTags() {
+    public static void register() {
 
         // <--[tag]
         // @attribute <PlayerTag.we_brush_info[(<item>)]>

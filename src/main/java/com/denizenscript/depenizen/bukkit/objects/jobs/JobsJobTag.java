@@ -38,10 +38,6 @@ public class JobsJobTag implements ObjectTag, Adjustable {
     //   OBJECT FETCHER
     /////////////////
 
-    public static JobsJobTag valueOf(String string) {
-        return valueOf(string, null);
-    }
-
     @Fetchable("job")
     public static JobsJobTag valueOf(String string, TagContext context) {
         if (string.startsWith("job@")) {
@@ -69,7 +65,7 @@ public class JobsJobTag implements ObjectTag, Adjustable {
     }
 
     public static boolean matches(String arg) {
-        if (valueOf(arg) != null) {
+        if (valueOf(arg, CoreUtilities.noDebugContext) != null) {
             return true;
         }
         return false;
@@ -176,7 +172,7 @@ public class JobsJobTag implements ObjectTag, Adjustable {
         mechanism.echoError("Cannot apply Properties to a Jobs Job!");
     }
 
-    public static void registerTags() {
+    public static void register() {
         PropertyParser.registerPropertyTagHandlers(JobsJobTag.class, tagProcessor);
 
         // <--[tag]
@@ -193,7 +189,7 @@ public class JobsJobTag implements ObjectTag, Adjustable {
 
         // <--[tag]
         // @attribute <JobsJobTag.full_description>
-        // @returns ElementTag
+        // @returns ListTag
         // @plugin Depenizen, Jobs
         // @description
         // Returns the full description of the job.

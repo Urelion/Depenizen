@@ -5,6 +5,7 @@ import com.denizenscript.denizencore.flags.AbstractFlagTracker;
 import com.denizenscript.denizencore.flags.FlaggableObject;
 import com.denizenscript.denizencore.flags.RedirectionFlagTracker;
 import com.denizenscript.denizencore.tags.ObjectTagProcessor;
+import com.denizenscript.denizencore.utilities.CoreUtilities;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.TownyUniverse;
@@ -17,7 +18,9 @@ import com.denizenscript.denizencore.objects.ObjectTag;
 import com.denizenscript.denizencore.tags.Attribute;
 import com.denizenscript.denizencore.tags.TagContext;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class NationTag implements ObjectTag, FlaggableObject {
 
@@ -43,16 +46,11 @@ public class NationTag implements ObjectTag, FlaggableObject {
     //   OBJECT FETCHER
     /////////////////
 
-    public static NationTag valueOf(String string) {
-        return valueOf(string, null);
-    }
-
     @Fetchable("nation")
     public static NationTag valueOf(String string, TagContext context) {
-        if (string == null) {
-            return null;
+        if (string.startsWith("nation@")) {
+            string = string.substring("nation@".length());
         }
-        string = string.replace("nation@", "");
         if (string.length() == 36 && string.indexOf('-') >= 0) {
             try {
                 UUID uuid = UUID.fromString(string);
@@ -78,7 +76,7 @@ public class NationTag implements ObjectTag, FlaggableObject {
         if (arg.startsWith("nation@")) {
             return true;
         }
-        return valueOf(arg) != null;
+        return valueOf(arg, CoreUtilities.noDebugContext) != null;
     }
 
     /////////////////////
@@ -150,7 +148,7 @@ public class NationTag implements ObjectTag, FlaggableObject {
         // Nothing to do.
     }
 
-    public static void registerTags() {
+    public static void register() {
 
         AbstractFlagTracker.registerFlagHandlers(tagProcessor);
 
@@ -173,8 +171,10 @@ public class NationTag implements ObjectTag, FlaggableObject {
         // @attribute <NationTag.assistants>
         // @returns ListTag(PlayerTag)
         // @plugin Depenizen, Towny
+        // @deprecated use 'members_by_rank'
         // @description
         // Returns a list of the nation's assistants.
+        // Deprecated in favor of <@link tag NationTag.members_by_rank[<rank>]>.
         // -->
         tagProcessor.registerTag(ListTag.class, "assistants", (attribute, object) -> {
             ListTag list = new ListTag();
@@ -220,6 +220,22 @@ public class NationTag implements ObjectTag, FlaggableObject {
             ListTag list = new ListTag();
             for (Nation enemy : object.nation.getEnemies()) {
                 list.addObject(new NationTag(enemy));
+            }
+            return list;
+        });
+
+        // <--[tag]
+        // @attribute <NationTag.members_by_rank[<rank>]>
+        // @returns ListTag(PlayerTag)
+        // @plugin Depenizen, Towny
+        // @description
+        // Returns a list of the nation's members with a given rank.
+        // -->
+        tagProcessor.registerTag(ListTag.class, ElementTag.class, "members_by_rank", (attribute, object, rankObj) -> {
+            ListTag list = new ListTag();
+            List<Resident> rankList = object.nation.getResidents().stream().filter((assistant) -> assistant.hasNationRank(rankObj.asString())).collect(Collectors.toList());
+            for (Resident resident : rankList) {
+                list.addObject(new PlayerTag(resident.getUUID()));
             }
             return list;
         });
@@ -275,15 +291,13 @@ public class NationTag implements ObjectTag, FlaggableObject {
         // @description
         // Returns the nation's current relation with another nation.
         // -->
-        tagProcessor.registerTag(ElementTag.class, "relation", (attribute, object) -> {
+        tagProcessor.registerTag(ElementTag.class, NationTag.class, "relation", (attribute, object, nationObj) -> {
 
             try {
-                NationTag to = valueOf(attribute.getParam());
-
-                if (object.nation.hasAlly(to.nation)) {
+                if (object.nation.hasAlly(nationObj.nation)) {
                     return new ElementTag("allies");
                 }
-                else if (object.nation.hasEnemy(to.nation)) {
+                else if (object.nation.hasEnemy(nationObj.nation)) {
                     return new ElementTag("enemies");
                 }
                 else {

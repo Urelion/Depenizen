@@ -38,13 +38,13 @@ public class GriefPreventionWorldProperties implements Property {
     public static final String[] handledMechs = new String[] {
     }; // None
 
-    private GriefPreventionWorldProperties(WorldTag world) {
+    public GriefPreventionWorldProperties(WorldTag world) {
         this.world = world;
     }
 
     WorldTag world;
 
-    public static void registerTags() {
+    public static void register() {
 
         // <--[tag]
         // @attribute <WorldTag.griefprevention_claims>
